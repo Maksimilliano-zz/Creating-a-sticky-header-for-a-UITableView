@@ -10,195 +10,129 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    lazy var screenWidth = view.bounds.size.width;
-    lazy var screenHeight = view.bounds.size.height;
-    let footerHeight = 0;
-    let maskStartingY = 270;  // Distance between top of scrolling content and top of screen
-    let maskMaxTravellingDistance = 80; // Distance the mask can move upwards before its content starts scrolling and gets clipped
-    
-    
-//    Create center title label
-//    Header will change size and postion as the scrollview scrolls
-    lazy var header: UILabel = {
-        let label = UILabel(frame: CGRect(x: 100, y: 100, width: screenWidth - 200, height: 100))
-        label.text = "Header";
-        label.font = UIFont(name: "Helvetic", size: 30)
-        label.textAlignment = .center
-        return label
-    }()
-    
-//    Create scroll view
-    lazy var scrollView: UIScrollView = {
-        let scrollView = UIScrollView(frame: view.frame)
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.delegate = self
-        return scrollView
-    }()
+  
     
 
     
-    var mask = UIView()
-    var content = UIView()
-    
+    var tableView:UITableView!
+    var headerView:CustomHeaderView!
+    var headerHeightConstraint:NSLayoutConstraint!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Set Ups
-        self.view.backgroundColor = #colorLiteral(red: 0.2588235438, green: 0.7568627596, blue: 0.9686274529, alpha: 1) // light blue
-        
-        self.view.addSubview(header)
-
-        self.view.addSubview(scrollView)
-
-
-
-        // Mask
-
-        let maskFrame = CGRect(x: 0, y: maskStartingY, width: Int(screenWidth), height: Int(screenHeight) - maskStartingY - footerHeight)
-        mask = UIView(frame: maskFrame)
-        mask.clipsToBounds = true // important
-        scrollView.addSubview(mask)
-
-
-
-        // Scrollable content
-
-        content = UIView(frame: CGRect(x: 0, y: 0, width: screenWidth, height: screenHeight * 1.5))
-        content.backgroundColor = UIColor.lightGray
-
-        // Create some dummy content. 14 red bars that vertically fill the content container
-        for i in 0..<14 {
-            let bar = UILabel(frame: CGRect(x: 20, y: CGFloat(0 + 52 * i), width: screenWidth - 40, height: 45))
-            bar.text = String(format: "bar no. %i", i + 1)
-            content.addSubview(bar)
-        }
-
-        mask.addSubview(content)
-
+    
         
         
+
+        view.backgroundColor = .white
+        setUpHeader()
+        setUpTableView()
         
-        // Set scrollview size to 1.5x the screen height for this example
         
-        scrollView.contentSize = CGSize(width: screenWidth, height: (screenHeight * 1.5) + CGFloat(footerHeight));
         
         
         
     }
+    
+    func setUpHeader() {
+        headerView = CustomHeaderView(frame: CGRect.zero , title: "Articles")
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(headerView)
+        headerHeightConstraint = headerView.heightAnchor.constraint(equalToConstant: 150)
+        headerHeightConstraint.isActive = true
+        
+        let constraints:[NSLayoutConstraint] = [
+            headerView.topAnchor.constraint(equalTo: view.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ]
+        
+        NSLayoutConstraint.activate(constraints)
+    }
+    
+    func setUpTableView() {
+        tableView = UITableView()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
+        let constraints:[NSLayoutConstraint] = [
+            tableView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ]
+        NSLayoutConstraint.activate(constraints)
+        tableView.register(UITableViewCell.self,forCellReuseIdentifier: "cell")
+        tableView.dataSource = self
+        tableView.delegate = self
+    }
+    
 
+    func animateHeader() {
+        self.headerHeightConstraint.constant = 150
+        UIView.animate(withDuration: 0.4, delay: 0.0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5, options: .curveEaseInOut, animations: {
+            self.view.layoutIfNeeded()
+        }, completion: nil)
+    }
+    
 
 }
 
+
+
+
+
+
+
+
+
+
+
+
 extension ViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        // MOVING THE MASK
-        //
-        // Here we prevent the mask from moving as the scollview scrolls. There are two phases of motion:
-        //
-        // 1.
-        // At first, we want the top of the mask to move upwards as the user starts scrolling, while the bottom of
-        // the mask stays anchored to the top of the footer. This means the mask's height increases at the same
-        // speed that it moves upwards. During this phase, the mask appears to be stretching upwards.
-        //
-        //
-        // 2.
-        // Then when the mask reaches the threshold (self.maskMaxTravellingDistance), the top of the mask
-        // stops moveing upwards with the scroll and the mask stops increasing in height. It is then completely
-        // stationary with respect to the screen.
-        
-        let offsetY = scrollView.contentOffset.y;
-        
-        let newMaskHeight: CGFloat
-        let newMaskY: CGFloat
-        let newMaskFrame: CGRect
-        
-        if (offsetY < CGFloat(maskMaxTravellingDistance)) {
+        if scrollView.contentOffset.y < 0 {
+            self.headerHeightConstraint.constant += abs(scrollView.contentOffset.y)
+            headerView.incrementColorAlpha(offset: self.headerHeightConstraint.constant)
+            headerView.incrementArticleAlpha(offset: self.headerHeightConstraint.constant)
+        } else if scrollView.contentOffset.y > 0 && self.headerHeightConstraint.constant >= 65 {
+            self.headerHeightConstraint.constant -= scrollView.contentOffset.y/100
+            headerView.decrementColorAlpha(offset: scrollView.contentOffset.y)
+            headerView.decrementArticleAlpha(offset: self.headerHeightConstraint.constant)
             
-            // Motion phase 1
-            
-            newMaskHeight = CGFloat(screenHeight - CGFloat(maskStartingY) - CGFloat(footerHeight)) + offsetY;
-            newMaskY = CGFloat(maskStartingY);
-            newMaskFrame = CGRect(x: 0, y: newMaskY, width: self.screenWidth, height: newMaskHeight);
-            
-        } else {
-            
-            // Motion phase 2
-
-            newMaskHeight = screenHeight - CGFloat(maskStartingY) - CGFloat(footerHeight) + CGFloat(maskMaxTravellingDistance);
-            newMaskY =  CGFloat(maskStartingY - maskMaxTravellingDistance) + offsetY;
-            newMaskFrame = CGRect(x: 0, y: newMaskY, width: self.screenWidth, height: newMaskHeight);
-            
+            if self.headerHeightConstraint.constant < 65 {
+                self.headerHeightConstraint.constant = 65
+            }
         }
-        
-        mask.frame = newMaskFrame;
-        
-        
-        
-        
-        // MOVING THE CONTENT
-        //
-        // Because our content container is a subview of the mask, it means that the content view is
-        // also fixed to the screen along with the mask. To counteract this, we have to do the opposite to what we
-        // did to the mask (above).
-        //
-        // But we only have to apply this counteractive measure when the scrollview is in the second phase of
-        // motion, i.e. after the mask has stopped moving upwards and has become fully static with relative to the
-        // screen.
-        
-        let newContentY: CGFloat
-        let newContentFrame: CGRect
-        
-        if (Int(offsetY) < self.maskMaxTravellingDistance) {
-            
-            // Motion phase 1
-            
-            // We make sure the frame is set correctly to stop the top of the content from occasionally being clipped by the mask when
-            // the user has scrolled too fast.
-            
-            newContentFrame = CGRect(x: 0, y: 0, width: self.screenWidth , height: self.screenHeight * 1.5);
-            content.frame = newContentFrame;
-            
-        } else {
-            
-            // Motion phase 2
-            
-            // Once the mask is fixed to the screen, ensure that its content subview can still scroll
-            
-            newContentY = CGFloat(self.maskMaxTravellingDistance) - offsetY;
-            newContentFrame = CGRect(x: 0, y: newContentY, width: self.screenWidth , height: self.screenHeight * 1.5);
-            self.content.frame = newContentFrame;
-            
-        }
-        
-        
-        // MOVING THE HEADER
-        //
-        // In this example, the header is going to move upwards and fade out as the user scrolls.
-        // The to achieve this effect, we must map the header's origin.y to the amount that the
-        // scrollview has scrolled
-        
-        let newHeaderFrame: CGRect
-        let newHeaderY: CGFloat
-        
-        if (Int(offsetY) <= self.maskMaxTravellingDistance) {
-            
-            newHeaderY = 100 - (offsetY * 0.5); // move at half the speed of scroll
-            newHeaderFrame = CGRect(x: header.frame.origin.x, y: newHeaderY, width: self.header.frame.size.width, height: self.header.frame.size.height);
-            header.frame = newHeaderFrame;
-            
-        } else {
-            
-            newHeaderY = CGFloat(100 - (Double(maskMaxTravellingDistance) * 0.5));
-            newHeaderFrame = CGRect(x: self.header.frame.origin.x, y: newHeaderY, width: self.header.frame.size.width, height: self.header.frame.size.height);
-            self.header.frame = newHeaderFrame;
-
-        }
-        
-        
-        
-        
-        
-        
     }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if self.headerHeightConstraint.constant > 150 {
+            animateHeader()
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        if self.headerHeightConstraint.constant > 150 {
+            animateHeader()
+        }
+    }
+}
+
+extension ViewController: UITableViewDelegate {
+    
+}
+
+extension ViewController: UITableViewDataSource {
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 20
+    }
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell",   for: indexPath as IndexPath)
+        cell.textLabel?.text = "Article \(indexPath.row)"
+        return cell
+    }
+    
+    
 }

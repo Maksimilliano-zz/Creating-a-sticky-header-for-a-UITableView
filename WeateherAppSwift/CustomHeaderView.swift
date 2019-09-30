@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class CategoryHeaderView: UIView {
+class CustomHeaderView: UIView {
     var imageView:UIImageView!
     var colorView:UIView!
     var bgColor = UIColor(red: 235/255, green: 96/255, blue: 91/255, alpha: 1)
@@ -73,6 +73,34 @@ class CategoryHeaderView: UIView {
         ]
         NSLayoutConstraint.activate(imageConstraints)
         articleIcon.image = UIImage(named: "article")
+    }
+    
+    func decrementColorAlpha(offset: CGFloat) {
+        if self.colorView.alpha <= 1 {
+            let alphaOffset = (offset/500)/85
+            self.colorView.alpha += alphaOffset
+        }
+    }
+    
+    func decrementArticleAlpha(offset: CGFloat) {
+        if self.articleIcon.alpha >= 0 {
+            let alphaOffset = max((offset - 65)/85.0, 0)
+            self.articleIcon.alpha = alphaOffset
+        }
+    }
+    
+    func incrementColorAlpha(offset: CGFloat) {
+        if self.colorView.alpha >= 0.6 {
+            let alphaOffset = (offset/200)/85
+            self.colorView.alpha -= alphaOffset
+        }
+    }
+    
+    func incrementArticleAlpha(offset: CGFloat) {
+        if self.articleIcon.alpha <= 1 {
+            let alphaOffset = max((offset - 65)/85, 0)
+            self.articleIcon.alpha = alphaOffset
+        }
     }
     
     
