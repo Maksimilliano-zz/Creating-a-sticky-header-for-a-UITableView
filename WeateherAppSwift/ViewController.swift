@@ -16,36 +16,40 @@ class ViewController: UIViewController {
     let maskStartingY = 270;  // Distance between top of scrolling content and top of screen
     let maskMaxTravellingDistance = 80; // Distance the mask can move upwards before its content starts scrolling and gets clipped
     
-    var header = UILabel()
+    
+//    Create center title label
+//    Header will change size and postion as the scrollview scrolls
+    lazy var header: UILabel = {
+        let label = UILabel(frame: CGRect(x: 100, y: 100, width: screenWidth - 200, height: 100))
+        label.text = "Header";
+        label.font = UIFont(name: "Helvetic", size: 30)
+        label.textAlignment = .center
+        return label
+    }()
+    
+//    Create scroll view
+    lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView(frame: view.frame)
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.delegate = self
+        return scrollView
+    }()
+    
+
+    
     var mask = UIView()
     var content = UIView()
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Settings
-            
-            
-            
-        self.view.backgroundColor = .red // light blue
-            
-            
-            
-            // Header. This will change size and postion as the scrollview scrolls
-        header = UILabel(frame: CGRect(x: 100, y: 100, width: screenWidth - 200, height: 100))
-        header.text = "Header";
-        header.font = UIFont(name: "Helvetic", size: 30)
-        header.textAlignment = .center
+        // Set Ups
+        self.view.backgroundColor = #colorLiteral(red: 0.2588235438, green: 0.7568627596, blue: 0.9686274529, alpha: 1) // light blue
+        
         self.view.addSubview(header)
-        
-        
-        // Scrollview
 
-        let scrollView = UIScrollView(frame: view.frame)
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.delegate = self
-        view.addSubview(scrollView)
+        self.view.addSubview(scrollView)
 
 
 
