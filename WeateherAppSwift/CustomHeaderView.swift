@@ -1,10 +1,3 @@
-//
-//  CategoryView.swift
-//  WeateherAppSwift
-//
-//  Created by Максим Чижавко on 30/09/2019.
-//  Copyright © 2019 Максим Чижавко. All rights reserved.
-//
 
 import Foundation
 import UIKit
